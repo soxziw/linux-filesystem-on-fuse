@@ -1,2 +1,2 @@
-fuse: fuse.cpp
-	g++ -o fuse fuse.cpp -lfuse -D_FILE_OFFSET_BITS=64
+fuse: fuse.c
+	gcc -Wall fuse.c `pkg-config fuse3 --cflags --libs` -o fuse

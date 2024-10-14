@@ -1,0 +1,6 @@
+-tests:
+- test ls to show mountpoint
+- cd into mountpoint
+- fork/execve for a program? Don't think so
+- write to file in /cs270
+- create file in /cs270, then write to it
