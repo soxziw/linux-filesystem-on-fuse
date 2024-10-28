@@ -39,6 +39,7 @@
 
 #include <fuse.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -68,7 +69,7 @@ static const struct fuse_opt option_spec[] = {
 	FUSE_OPT_END
 };
 
-static void *hello_init(struct fuse_conn_info *conn,
+static void* fuse_init(struct fuse_conn_info *conn,
 			struct fuse_config *cfg)
 {
 	(void) conn;
@@ -76,7 +77,7 @@ static void *hello_init(struct fuse_conn_info *conn,
 	return NULL;
 }
 
-static int hello_getattr(const char *path, struct stat *stbuf,
+static int fuse_getattr(const char *path, struct stat *stbuf,
 			 struct fuse_file_info *fi)
 {
 	(void) fi;
@@ -84,10 +85,10 @@ static int hello_getattr(const char *path, struct stat *stbuf,
 
 	memset(stbuf, 0, sizeof(struct stat));
 	if (strcmp(path, "/") == 0) {
-		stbuf->st_mode = S_IFDIR | 0755;
+		stbuf->st_mode = S_IFDIR | 0777;
 		stbuf->st_nlink = 2;
 	} else if (strcmp(path+1, options.filename) == 0) {
-		stbuf->st_mode = S_IFREG | 0444;
+		stbuf->st_mode = S_IFREG | 0777;
 		stbuf->st_nlink = 1;
 		stbuf->st_size = strlen(options.contents);
 	} else
@@ -96,38 +97,46 @@ static int hello_getattr(const char *path, struct stat *stbuf,
 	return res;
 }
 
-static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			 off_t offset, struct fuse_file_info *fi,
-			 enum fuse_readdir_flags flags)
+static int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+                         off_t offset, struct fuse_file_info *fi,
+                         enum fuse_readdir_flags flags)
 {
-	(void) offset;
-	(void) fi;
-	(void) flags;
+    (void) offset;
+    (void) fi;
 
-	if (strcmp(path, "/") != 0)
-		return -ENOENT;
+    // Ensure the path is the root directory
+    if (strcmp(path, "/") != 0)
+        return -ENOENT;
 
-	filler(buf, ".", NULL, 0, 1);
-	filler(buf, "..", NULL, 0, 1);
-	filler(buf, options.filename, NULL, 0, 1);
+    // Prepare stat structure for directory entries
+    struct stat st;
+    memset(&st, 0, sizeof(st));
 
-	return 0;
+    // Add "." and ".." entries
+    st.st_mode = S_IFDIR | 0755;
+    filler(buf, ".", &st, 0, 0);
+    filler(buf, "..", &st, 0, 0);
+
+    // Add the "hello" file entry
+    st.st_mode = S_IFREG | 0777;
+    st.st_nlink = 1;
+    st.st_size = strlen(options.contents);
+    filler(buf, options.filename, &st, 0, 0);
+
+    return 0;
 }
 
-static int hello_open(const char *path, struct fuse_file_info *fi)
-{
+static int fuse_open(const char *path, struct fuse_file_info *fi) {
 	if (strcmp(path+1, options.filename) != 0)
 		return -ENOENT;
 
-	if ((fi->flags & O_ACCMODE) != O_RDONLY)
-		return -EACCES;
+	// if ((fi->flags & O_ACCMODE) != O_RDONLY)
+	// 	return -EACCES;
 
 	return 0;
 }
 
-static int hello_read(const char *path, char *buf, size_t size, off_t offset,
-		      struct fuse_file_info *fi)
-{
+static int fuse_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
 	size_t len;
 	(void) fi;
 	if(strcmp(path+1, options.filename) != 0)
@@ -144,12 +153,43 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	return size;
 }
 
+static int fuse_getxattr(const char* path, const char* name, char* value, size_t size) {
+	return 0;
+}
+
+void send_mail(char* buf) {
+	//get command length to malloc
+	int command_length = 1 + strlen("echo \"") + strlen(buf) + strlen("\" | mail -s 'CS270 testing' brandon_lee@ucsb.edu");
+	char* command = (char*)malloc(command_length * sizeof(char));
+	strcpy(command, "echo \"");
+	strcat(command, buf);
+	strcat(command, "\" | mail -s 'CS270 testing' brandon_lee@ucsb.edu");
+	FILE *fp = popen(command, "w");
+	pclose(fp);
+	free(command);
+	return;
+}
+
+static int fuse_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	char message[size];
+	strcpy(message, buf);
+	send_mail(message);
+	return 0;
+}
+
+static int fuse_flush(const char* c, struct fuse_file_info* f) {
+	return 0;
+}
+
 static const struct fuse_operations hello_oper = {
-	.init           = hello_init,
-	.getattr	= hello_getattr,
-	.readdir	= hello_readdir,
-	.open		= hello_open,
-	.read		= hello_read,
+	.init           = fuse_init,
+	.getattr	= fuse_getattr,
+	.readdir	= fuse_readdir,
+	.open		= fuse_open,
+	.read		= fuse_read,
+	.write 		= fuse_write,
+	.getxattr	= fuse_getxattr,
+	.flush		= fuse_flush
 };
 
 static void show_help(const char *progname)
