@@ -174,7 +174,7 @@ static int fuse_write(const char *path, const char *buf, size_t size, off_t offs
 	char message[size];
 	strcpy(message, buf);
 	send_mail(message);
-	return 0;
+	return sizeof(message);
 }
 
 static int fuse_flush(const char* c, struct fuse_file_info* f) {
