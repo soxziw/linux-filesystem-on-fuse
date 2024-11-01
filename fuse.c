@@ -59,6 +59,14 @@ static struct options {
 	int show_help;
 } options;
 
+typedef struct open_file_info {
+	char* filename;
+	int flags;
+} open_file_info;
+
+#define OPEN_FILE_LIST_SIZE 100
+open_file_info open_files[OPEN_FILE_LIST_SIZE];
+
 #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
 static const struct fuse_opt option_spec[] = {
@@ -77,9 +85,7 @@ static void* fuse_init(struct fuse_conn_info *conn,
 	return NULL;
 }
 
-static int fuse_getattr(const char *path, struct stat *stbuf,
-			 struct fuse_file_info *fi)
-{
+static int fuse_getattr(const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 	(void) fi;
 	int res = 0;
 
@@ -107,7 +113,7 @@ static int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     // Ensure the path is the root directory
     if (strcmp(path, "/") != 0)
         return -ENOENT;
-
+;
     // Prepare stat structure for directory entries
     struct stat st;
     memset(&st, 0, sizeof(st));
@@ -125,13 +131,49 @@ static int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     return 0;
 }
+static int fuse_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
+	int rd_only = 0, wr_only = 0, rdwr = 0, creat = 0; 
+	if ((fi->flags & O_RDONLY) == O_RDONLY) rd_only = 1;
+	if ((fi->flags & O_WRONLY) == O_WRONLY) wr_only = 1;
+	if ((fi->flags & O_RDWR) == O_RDWR) rdwr = 1;
+	if ((fi->flags & O_CREAT) == O_CREAT) creat = 1;
+
+	if (O_CREAT) {
+		//first look for file, and if not create a file
+		int i = 0;
+		while (i < OPEN_FILE_LIST_SIZE && open_files[i].filename!=NULL){
+			if (strcmp(open_files[i].filename, path) == 0) { //file is already opened
+				return -EBUSY;
+			}
+			i += 1;
+		}
+		open_files[i].filename = (char*)calloc(strlen(path)+1, sizeof(char));
+		memcpy(open_files[i].filename, path, strlen(path));
+	}
+	return 0;
+}
 
 static int fuse_open(const char *path, struct fuse_file_info *fi) {
-	if (strcmp(path+1, options.filename) != 0)
-		return -ENOENT;
+	// if (strcmp(path+1, options.filename) != 0)
+	// 	return -ENOENT;
+	int rd_only = 0, wr_only = 0, rdwr = 0, creat = 0; 
+	if ((fi->flags & O_RDONLY) == O_RDONLY) rd_only = 1;
+	if ((fi->flags & O_WRONLY) == O_WRONLY) wr_only = 1;
+	if ((fi->flags & O_RDWR) == O_RDWR) rdwr = 1;
+	if ((fi->flags & O_CREAT) == O_CREAT) creat = 1;
 
-	// if ((fi->flags & O_ACCMODE) != O_RDONLY)
-	// 	return -EACCES;
+	if (O_CREAT) {
+		//first look for file, and if not create a file
+		int i = 0;
+		while (i < OPEN_FILE_LIST_SIZE && open_files[i].filename!=NULL){
+			if (strcmp(open_files[i].filename, path) == 0) { //file is already opened
+				return -EBUSY;
+			}
+			i += 1;
+		}
+		open_files[i].filename = (char*)calloc(strlen(path)+1, sizeof(char));
+		memcpy(open_files[i].filename, path, strlen(path));
+	}
 
 	return 0;
 }
@@ -171,6 +213,20 @@ void send_mail(char* buf) {
 }
 
 static int fuse_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	int i = 0;
+	// check if file to be written to is opened
+	short is_open = 0;
+	while (i < OPEN_FILE_LIST_SIZE) {
+		if (open_files[i].filename) {
+			if (strcmp(open_files[i].filename, path) == 0) {
+			is_open = 1;
+			break;
+			}
+		}
+		i++;
+	}
+	if (!is_open) return -EBADF;
+
 	char message[size];
 	strcpy(message, buf);
 	send_mail(message);
@@ -189,7 +245,8 @@ static const struct fuse_operations hello_oper = {
 	.read		= fuse_read,
 	.write 		= fuse_write,
 	.getxattr	= fuse_getxattr,
-	.flush		= fuse_flush
+	.flush		= fuse_flush,
+	.create		= fuse_create
 };
 
 static void show_help(const char *progname)
@@ -211,7 +268,7 @@ int main(int argc, char *argv[])
 	/* Set defaults -- we have to use strdup so that
 	   fuse_opt_parse can free the defaults if other
 	   values are specified */
-	options.filename = strdup("hello");
+	options.filename = strdup("newfile");
 	options.contents = strdup("Hello World!\n");
 
 	/* Parse options */
@@ -227,6 +284,10 @@ int main(int argc, char *argv[])
 		show_help(argv[0]);
 		assert(fuse_opt_add_arg(&args, "--help") == 0);
 		args.argv[0][0] = '\0';
+	}
+
+	for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
+		open_files[i].filename = NULL;
 	}
 
 	ret = fuse_main(args.argc, args.argv, &hello_oper, NULL);

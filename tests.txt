@@ -4,3 +4,7 @@
 - fork/execve for a program? Don't think so
 - write to file in /cs270
 - create file in /cs270, then write to it
+
+
+phase 1 test:
+- test on different users
