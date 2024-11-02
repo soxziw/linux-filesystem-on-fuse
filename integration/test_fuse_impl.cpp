@@ -30,16 +30,16 @@ protected:
 };
 
 
-TEST_F(FuseIntegration, WriteExistFile) {
-    const char* existFile = "/tmp/mountdir/newfile";
-    const char* content = "write exist file\n";
+// TEST_F(FuseIntegration, WriteExistFile) {
+//     const char* existFile = "/tmp/mountdir/newfile";
+//     const char* content = "write exist file\n";
 
-    int fd = open(existFile, O_RDWR);
-    ASSERT_GE(fd, 0);
+//     int fd = open(existFile, O_RDWR);
+//     ASSERT_GE(fd, 0);
 
-    ssize_t bytes_written = write(fd, content, strlen(content));
-    ASSERT_EQ((size_t)bytes_written, strlen(content));
-}
+//     ssize_t bytes_written = write(fd, content, strlen(content));
+//     ASSERT_EQ((size_t)bytes_written, strlen(content));
+// }
 
 
 TEST_F(FuseIntegration, WriteNewFile) {

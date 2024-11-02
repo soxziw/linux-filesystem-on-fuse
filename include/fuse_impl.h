@@ -10,11 +10,11 @@
 #include <cstring>
 #include <fuse3/fuse.h>
 
-struct options {
-	std::string filename;
-	std::string contents;
-	bool show_help;
-};
+// struct options {
+// 	std::string filename;
+// 	std::string contents;
+// 	bool show_help;
+// };
 
 struct open_file_info {
 	std::string filename;
@@ -23,7 +23,7 @@ struct open_file_info {
 
 #define OPEN_FILE_LIST_SIZE 100
 extern struct open_file_info open_files[OPEN_FILE_LIST_SIZE];
-extern struct options options;
+// extern struct options options;
 
 void* fuse_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
 
@@ -44,6 +44,8 @@ int fuse_getxattr(const char* path, const char* name, char* value, size_t size);
 int fuse_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi);
 
 int fuse_flush(const char* c, struct fuse_file_info* f);
+
+int fuse_utimens(const char* path,const struct timespec tv[2], struct fuse_file_info *fi);
 
 extern const struct fuse_operations hello_oper;
 

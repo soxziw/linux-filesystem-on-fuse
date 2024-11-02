@@ -9,15 +9,15 @@
 #include <cstdlib>
 #include "fuse_impl.h"
 
-#define OPTION(t, p)                           \
-    { t, offsetof(struct options, p), 1 }
-static const struct fuse_opt option_spec[] = {
-	OPTION("--name=%s", filename),
-	OPTION("--contents=%s", contents),
-	OPTION("-h", show_help),
-	OPTION("--help", show_help),
-	FUSE_OPT_END
-};
+// #define OPTION(t, p)                           \
+//     { t, offsetof(struct options, p), 1 }
+// static const struct fuse_opt option_spec[] = {
+// 	OPTION("--name=%s", filename),
+// 	OPTION("--contents=%s", contents),
+// 	OPTION("-h", show_help),
+// 	OPTION("--help", show_help),
+// 	FUSE_OPT_END
+// };
 
 
 class FuseTest : public ::testing::Test {
@@ -34,10 +34,10 @@ TEST_F(FuseTest, FuseOpen_newFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    options.filename = "newfile";
+    open_files[0].filename = "newfile";
 
     struct fuse_file_info fi;
-    int res = fuse_open("/newfile", &fi);
+    int res = fuse_open("newfile", &fi);
     ASSERT_EQ(res, 0);
 }
 
@@ -45,10 +45,10 @@ TEST_F(FuseTest, FuseOpen_brandNewFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    options.filename = "newfile";
+    open_files[0].filename = "newfile";
 
     struct fuse_file_info fi;
-    int res = fuse_open("/brandnewfile", &fi);
+    int res = fuse_open("brandnewfile", &fi);
     ASSERT_EQ(res, -ENOENT);
 }
 

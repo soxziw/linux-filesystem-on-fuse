@@ -52,7 +52,7 @@ TEST_F(FuseIntegration, TouchToCreate) {
     const char* touchFile = "/tmp/mountdir/touch_file";
 
     std::string touch_cmd = "touch " + (std::string)touchFile;
-    testCommand(touch_cmd.c_str(), true);
+    testCommand(touch_cmd.c_str());
 
     std::string test_cmd = "test " + (std::string)touchFile;
     testCommand(test_cmd.c_str());

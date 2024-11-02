@@ -52,7 +52,7 @@
  */
 
 struct open_file_info open_files[OPEN_FILE_LIST_SIZE];
-struct options options;
+// struct options options;
 
 open_file_info* find_path(const char* path){
   for (int count = 0; count < OPEN_FILE_LIST_SIZE; count++) {
@@ -61,15 +61,15 @@ open_file_info* find_path(const char* path){
     }
 	return NULL;
 }
-#define OPTION(t, p)                           \
-    { t, offsetof(struct options, p), 1 }
-const struct fuse_opt option_spec[] = {
-	OPTION("--name=%s", filename),
-	OPTION("--contents=%s", contents),
-	OPTION("-h", show_help),
-	OPTION("--help", show_help),
-	FUSE_OPT_END
-};
+// #define OPTION(t, p)                           \
+//     { t, offsetof(struct options, p), 1 }
+// const struct fuse_opt option_spec[] = {
+// 	OPTION("--name=%s", filename),
+// 	OPTION("--contents=%s", contents),
+// 	OPTION("-h", show_help),
+// 	OPTION("--help", show_help),
+// 	FUSE_OPT_END
+// };
 
 void* fuse_init(struct fuse_conn_info* conn,
 			struct fuse_config* cfg)
@@ -89,10 +89,6 @@ int fuse_getattr(const char* path, struct stat* stbuf,
 	if (strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0777;
 		stbuf->st_nlink = 2;
-	} else if (strcmp(path+1, options.filename.c_str()) == 0) {
-		stbuf->st_mode = S_IFREG | 0777;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = options.contents.size();
 	} else{
         struct open_file_info *file = find_path(path);
         if (file == NULL) {
@@ -128,12 +124,6 @@ int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
     st.st_mode = S_IFDIR | 0755;
     filler(buf, ".", &st, 0, static_cast<fuse_fill_dir_flags>(0));
     filler(buf, "..", &st, 0, static_cast<fuse_fill_dir_flags>(0));
-
-    // Add the "hello" file entry
-    st.st_mode = S_IFREG | 0777;
-    st.st_nlink = 1;
-    st.st_size = options.contents.size(); 
-    filler(buf, options.filename.c_str(), &st, 0, static_cast<fuse_fill_dir_flags>(0));
 	
 	for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         if (!open_files[i].filename.empty()) {
@@ -150,31 +140,28 @@ int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 }
 
 int fuse_open(const char* path, struct fuse_file_info* fi) {
-	if (strcmp(path+1, options.filename.c_str()) != 0)
-		return -ENOENT;
+    open_file_info* paths=find_path(path);
+	if (paths == NULL)return -ENOENT;
 
-	// if ((fi->flags & O_ACCMODE) != O_RDONLY)
-	// 	return -EACCES;
-
-	return 0;
+    return 0;
 }
 
-int fuse_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
-	size_t len;
-	(void) fi;
-	if(strcmp(path+1, options.filename.c_str()) != 0)
-		return -ENOENT;
+// int fuse_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
+// 	size_t len;
+// 	(void) fi;
+// 	if(strcmp(path+1, options.filename.c_str()) != 0)
+// 		return -ENOENT;
 
-	len = options.contents.size();
-	if (offset < len) {
-		if (offset + size > len)
-			size = len - offset;
-		memcpy(buf, options.contents.c_str() + offset, size);
-	} else
-		size = 0;
+// 	len = options.contents.size();
+// 	if (offset < len) {
+// 		if (offset + size > len)
+// 			size = len - offset;
+// 		memcpy(buf, options.contents.c_str() + offset, size);
+// 	} else
+// 		size = 0;
 
-	return size;
-}
+// 	return size;
+// }
 
 int fuse_getxattr(const char* path, const char* name, char* value, size_t size) {
 	return 0;
@@ -230,14 +217,19 @@ int fuse_create(const char* path, mode_t mode, struct fuse_file_info *fi){
 	return 0;
 }
 
+int fuse_utimens(const char* path,const struct timespec tv[2], struct fuse_file_info *fi) {
+	return 0;
+}
+
 const struct fuse_operations hello_oper = {
     .getattr    = fuse_getattr,
     .open       = fuse_open,
-    .read       = fuse_read,
+    // .read       = fuse_read,
     .write      = fuse_write,
     .flush      = fuse_flush,
     .getxattr   = fuse_getxattr,
     .readdir    = fuse_readdir,
     .init       = fuse_init,
     .create     = fuse_create,
+    .utimens 	= fuse_utimens,
 };
