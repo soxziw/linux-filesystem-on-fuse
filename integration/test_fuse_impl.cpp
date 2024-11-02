@@ -11,7 +11,7 @@
 
 class FuseIntegration : public ::testing::Test {
 protected:
-    const char *mountpoint = "/tmp/mountdir";
+    const char* mountpoint = "/tmp/mountdir";
     void SetUp() override {
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
         system(mkdir_cmd.c_str());
@@ -31,8 +31,8 @@ protected:
 
 
 TEST_F(FuseIntegration, WriteExistFile) {
-    const char *existFile = "/tmp/mountdir/newfile";
-    const char *content = "write exist file\n";
+    const char* existFile = "/tmp/mountdir/newfile";
+    const char* content = "write exist file\n";
 
     int fd = open(existFile, O_RDWR);
     ASSERT_GE(fd, 0);
@@ -43,8 +43,8 @@ TEST_F(FuseIntegration, WriteExistFile) {
 
 
 TEST_F(FuseIntegration, WriteNewFile) {
-    const char *newFile = "/tmp/mountdir/new_file";
-    const char *content = "write new file\n";
+    const char* newFile = "/tmp/mountdir/new_file";
+    const char* content = "write new file\n";
 
     int fd = open(newFile, O_WRONLY | O_CREAT, 0666);
     ASSERT_GE(fd, 0);

@@ -54,7 +54,7 @@
 struct open_file_info open_files[OPEN_FILE_LIST_SIZE];
 struct options options;
 
-open_file_info *find_path(const char* path){
+open_file_info* find_path(const char* path){
   for (int count = 0; count < OPEN_FILE_LIST_SIZE; count++) {
         if (!open_files[count].filename.empty() && open_files[count].filename == path)
             return &open_files[count];
@@ -71,15 +71,15 @@ const struct fuse_opt option_spec[] = {
 	FUSE_OPT_END
 };
 
-void* fuse_init(struct fuse_conn_info *conn,
-			struct fuse_config *cfg)
+void* fuse_init(struct fuse_conn_info* conn,
+			struct fuse_config* cfg)
 {
 	(void) conn;
 	cfg->kernel_cache = 1;
 	return NULL;
 }
 
-int fuse_getattr(const char *path, struct stat *stbuf,
+int fuse_getattr(const char* path, struct stat* stbuf,
 			 struct fuse_file_info *fi)
 {
 	(void) fi;
@@ -109,8 +109,8 @@ int fuse_getattr(const char *path, struct stat *stbuf,
 	return res;
 }
 
-int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-                         off_t offset, struct fuse_file_info *fi,
+int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
+                         off_t offset, struct fuse_file_info* fi,
                          enum fuse_readdir_flags flags)
 {
     (void) offset;
@@ -149,7 +149,7 @@ int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     return 0;
 }
 
-int fuse_open(const char *path, struct fuse_file_info *fi) {
+int fuse_open(const char* path, struct fuse_file_info* fi) {
 	if (strcmp(path+1, options.filename.c_str()) != 0)
 		return -ENOENT;
 
@@ -159,7 +159,7 @@ int fuse_open(const char *path, struct fuse_file_info *fi) {
 	return 0;
 }
 
-int fuse_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+int fuse_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
 	size_t len;
 	(void) fi;
 	if(strcmp(path+1, options.filename.c_str()) != 0)
@@ -193,7 +193,7 @@ void send_mail(char* buf) {
 	return;
 }
 
-int fuse_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+int fuse_write(const char* path, const char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
 	char message[size];
 	strcpy(message, buf);
 	send_mail(message);
@@ -204,7 +204,7 @@ int fuse_flush(const char* c, struct fuse_file_info* f) {
 	return 0;
 }
 
-int fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi){
+int fuse_create(const char* path, mode_t mode, struct fuse_file_info *fi){
 	(void) mode;
 	(void) fi;
  // Check if the file already exists

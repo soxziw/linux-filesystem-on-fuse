@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include "fuse_impl.h"
 
-void testCommand(const char *cmd, bool ignoreError = false) {
+void testCommand(const char* cmd, bool ignoreError = false) {
     FILE* fp = popen(cmd, "w");
     ASSERT_NE(fp, nullptr) << "[" << cmd << "] Failed to run command";
 
@@ -29,7 +29,7 @@ void testCommand(const char *cmd, bool ignoreError = false) {
 
 class FuseIntegration : public ::testing::Test {
 protected:
-    const char *mountpoint = "/tmp/mountdir";
+    const char* mountpoint = "/tmp/mountdir";
     void SetUp() override {
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
         testCommand(mkdir_cmd.c_str());
@@ -49,7 +49,7 @@ protected:
 
 
 TEST_F(FuseIntegration, TouchToCreate) {
-    const char *touchFile = "/tmp/mountdir/touch_file";
+    const char* touchFile = "/tmp/mountdir/touch_file";
 
     std::string touch_cmd = "touch " + (std::string)touchFile;
     testCommand(touch_cmd.c_str(), true);
@@ -60,8 +60,8 @@ TEST_F(FuseIntegration, TouchToCreate) {
 
 
 TEST_F(FuseIntegration, EchoToCreate) {
-    const char *echoFile = "/tmp/mountdir/echo_file";
-    const char *content = "echo comment\n";
+    const char* echoFile = "/tmp/mountdir/echo_file";
+    const char* content = "echo comment\n";
 
     std::string echo_cmd = "echo " + (std::string)content + " > " + (std::string)echoFile;
     testCommand(echo_cmd.c_str());
