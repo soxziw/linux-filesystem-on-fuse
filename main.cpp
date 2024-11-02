@@ -1,12 +1,9 @@
 #define FUSE_USE_VERSION 31
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stddef.h>
-#include <assert.h>
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <vector>
 #include "fuse_impl.h"
 
 
@@ -41,8 +38,9 @@ int main(int argc, char *argv[])
 	/* Set defaults -- we have to use strdup so that
 	   fuse_opt_parse can free the defaults if other
 	   values are specified */
-	options.filename = strdup("newfile");
-	options.contents = strdup("Hello World!\n");
+	options.filename = "newfile";
+	options.contents = "Hello World!\n";
+	options.show_help = false;
 
 	/* Parse options */
 	if (fuse_opt_parse(&args, &options, option_spec, NULL) == -1)
@@ -60,13 +58,11 @@ int main(int argc, char *argv[])
 	}
 
 	for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
-		open_files[i].filename = NULL;
+		open_files[i].filename.clear();
 	}
 
 	ret = fuse_main(args.argc, args.argv, &hello_oper, NULL);
 	fuse_opt_free_args(&args);
-    open_files[0].filename = (char*)calloc(strlen("newfile")+1, sizeof(char));
-    memcpy(open_files[0].filename, "newfile", strlen("newfile"));
 
 	return ret;
 }

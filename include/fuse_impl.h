@@ -1,26 +1,29 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {  // C++ 中使用 extern "C" 以确保 C 函数可以被正确链接
-#endif
+// #ifdef __cplusplus
+// extern "C" {  // C++ 中使用 extern "C" 以确保 C 函数可以被正确链接
+// #endif
 
 #define FUSE_USE_VERSION 31
-#include "fuse3/fuse.h"
+
+#include <string>
+#include <cstring>
+#include <fuse3/fuse.h>
 
 struct options {
-	const char *filename;
-	const char *contents;
-	int show_help;
+	std::string filename;
+	std::string contents;
+	bool show_help;
 };
 
 struct open_file_info {
-	char* filename;
+	std::string filename;
 	int flags;
 };
 
 #define OPEN_FILE_LIST_SIZE 100
-struct open_file_info open_files[OPEN_FILE_LIST_SIZE];
-struct options options;
+extern struct open_file_info open_files[OPEN_FILE_LIST_SIZE];
+extern struct options options;
 
 void* fuse_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
 
@@ -44,6 +47,6 @@ int fuse_flush(const char* c, struct fuse_file_info* f);
 
 extern const struct fuse_operations hello_oper;
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif
