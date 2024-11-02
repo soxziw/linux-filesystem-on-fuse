@@ -30,66 +30,58 @@ protected:
 };
 
 
-TEST_F(FuseTest, FuseOpen_ExistFile) {
+TEST_F(FuseTest, FuseOpen_newFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    open_files[5].filename = "testfile_fuseopen_existfile";
+    options.filename = "newfile";
 
     struct fuse_file_info fi;
-    int res = fuse_open("testfile_fuseopen_existfile", &fi);
-    ASSERT_EQ(res, 5);
-
-    bool is_open = false;
-    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
-        if (open_files[i].filename == "testfile_fuseopen_existfile") {
-            is_open = true;
-            break;
-        }
-    }
-    ASSERT_EQ(is_open, true);
-}
-
-TEST_F(FuseTest, FuseOpen_CreateFile) {
-    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
-        open_files[i].filename.clear();
-    }
-    struct fuse_file_info fi;
-    int res = fuse_open("testfile_fuseopen_createfile", &fi);
+    int res = fuse_open("/newfile", &fi);
     ASSERT_EQ(res, 0);
-
-    bool is_open = false;
-    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
-        if (open_files[i].filename == "testfile_fuseopen_createfile") {
-            is_open = true;
-            break;
-        }
-    }
-    ASSERT_EQ(is_open, true);
 }
 
-TEST_F(FuseTest, FuseWrite_ValidWrite) {
+TEST_F(FuseTest, FuseOpen_brandNewFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    open_files[0].filename = "testfile_fusewrite_validwrite";
+    options.filename = "newfile";
+
+    struct fuse_file_info fi;
+    int res = fuse_open("/brandnewfile", &fi);
+    ASSERT_EQ(res, -ENOENT);
+}
+
+TEST_F(FuseTest, FuseCreate_ExistFile) {
+    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
+        open_files[i].filename.clear();
+    }
+    open_files[0].filename = "testfile_fuseopen_existfile";
+
+    struct fuse_file_info fi;
+    int res = fuse_create("testfile_fuseopen_existfile", 0, &fi);
+    ASSERT_EQ(res, -EEXIST);
+}
+
+TEST_F(FuseTest, FuseCreate_CreateFile) {
+    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
+        open_files[i].filename.clear();
+    }
+    struct fuse_file_info fi;
+    int res = fuse_create("testfile_fuseopen_createfile", 0, &fi);
+    ASSERT_EQ(res, 0);
+}
+
+TEST_F(FuseTest, FuseWrite_Write) {
+    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
+        open_files[i].filename.clear();
+    }
 
     struct fuse_file_info fi;
     std::string message = "Test message";
-    int res = fuse_write("testfile_fusewrite_validwrite", message.c_str(), message.size(), 0, &fi);
+    int res = fuse_write("testfile_fusewrite_write", message.c_str(), message.size(), 0, &fi);
     
     ASSERT_EQ(res, message.size());
-}
-
-TEST_F(FuseTest, FuseWrite_InvalidWrite) {
-    for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
-        open_files[i].filename.clear();
-    }
-    struct fuse_file_info fi;
-    std::string message = "Test message";
-    int res = fuse_write("testfile_fusewrite_invalidwrite", message.c_str(), message.size(), 0, &fi);
-    
-    ASSERT_EQ(res, -EBADF);
 }
 
 

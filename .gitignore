@@ -1,3 +1,6 @@
+# Build result
+build/*
+
 # Prerequisites
 *.d
 
