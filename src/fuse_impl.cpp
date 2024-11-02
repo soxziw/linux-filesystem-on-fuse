@@ -181,10 +181,11 @@ void send_mail(char* buf) {
 }
 
 int fuse_write(const char* path, const char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
-	char message[size];
+	char message[size + 1];
 	strncpy(message, buf + offset, size);
-	send_mail(message);
-	return sizeof(message);
+	message[size] = '\0';
+    send_mail(message);
+	return strlen(message);
 }
 
 int fuse_flush(const char* c, struct fuse_file_info* f) {
