@@ -19,58 +19,74 @@
 // 	FUSE_OPT_END
 // };
 
-
-TEST(FuseTest, FuseOpen_newFile) {
+/**
+ * Test 'fuse_open' a exist file.
+ */
+TEST(FuseTest, FuseOpen_ExistFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    open_files[0].filename = "newfile";
+    open_files[0].filename = "exist_file";
 
     struct fuse_file_info fi;
-    int res = fuse_open("newfile", &fi);
+    int res = fuse_open("exist_file", &fi);
     ASSERT_EQ(res, 0);
 }
 
-TEST(FuseTest, FuseOpen_brandNewFile) {
+
+/**
+ * Test 'fuse_open' a new file.
+ */
+TEST(FuseTest, FuseOpen_NewFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    open_files[0].filename = "newfile";
+    open_files[0].filename = "exist_file";
 
     struct fuse_file_info fi;
-    int res = fuse_open("brandnewfile", &fi);
+    int res = fuse_open("new_file", &fi);
     ASSERT_EQ(res, -ENOENT);
 }
 
+
+/**
+ * Test 'fuse_create' a exist file.
+ */
 TEST(FuseTest, FuseCreate_ExistFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
-    open_files[0].filename = "testfile_fuseopen_existfile";
+    open_files[0].filename = "exist_file";
 
     struct fuse_file_info fi;
-    int res = fuse_create("testfile_fuseopen_existfile", 0, &fi);
+    int res = fuse_create("exist_file", 0, &fi);
     ASSERT_EQ(res, -EEXIST);
 }
 
+
+/**
+ * Test 'fuse_create' a new file.
+ */
 TEST(FuseTest, FuseCreate_CreateFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
     struct fuse_file_info fi;
-    int res = fuse_create("testfile_fuseopen_createfile", 0, &fi);
+    int res = fuse_create("new_file", 0, &fi);
     ASSERT_EQ(res, 0);
 }
 
+/**
+ * Test 'fuse_write' a file.
+ */
 TEST(FuseTest, FuseWrite_Write) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
 
     struct fuse_file_info fi;
-    std::string message = "Test message";
-    int res = fuse_write("testfile_fusewrite_write", message.c_str(), message.size(), 0, &fi);
-    
+    std::string message = "FuseWrite_Write Test message";
+    int res = fuse_write("write_file", message.c_str(), message.size(), 0, &fi);
     ASSERT_EQ(res, message.size());
 }
 

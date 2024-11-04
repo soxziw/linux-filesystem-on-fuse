@@ -36,6 +36,7 @@ target_link_libraries(fuseTests gtest_main fuse3)
 
 file(GLOB_RECURSE INTEGRATION_SOURCES "integration/*.cpp")
 add_executable(fuseIntegrations ${INTEGRATION_SOURCES} ${SOURCES})
+target_include_directories(fuseIntegrations PRIVATE integration/include include /usr/include/fuse3)
 target_link_libraries(fuseIntegrations gtest_main fuse3)
 
 include(GoogleTest)

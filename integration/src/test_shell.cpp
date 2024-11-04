@@ -8,28 +8,21 @@
 #include <fcntl.h>
 #include <cstdlib>
 #include "fuse_impl.h"
-
-void testCommand(const char* cmd, bool ignoreError = false) {
-    FILE* fp = popen(cmd, "w");
-    ASSERT_NE(fp, nullptr) << "[" << cmd << "] Failed to run command";
-
-    int status = pclose(fp);
-    ASSERT_NE(status, -1) << "[" << cmd << "] pclose() failed";
-
-    if (!ignoreError) {
-        if (WIFEXITED(status)) {
-            int exitStatus = WEXITSTATUS(status);
-            EXPECT_EQ(exitStatus, 0) << "[" << cmd << "] Command exited with error status: " << exitStatus;
-        } else {
-            FAIL() << "[" << cmd << "] Command did not terminate normally.";
-        }
-    }
-}
+#include "utils.h"
 
 
+/**
+ * Integration tests.
+ * Googletest will call SetUp() before each test case, and TearDown() after each test case.
+ */
 class FuseIntegration : public ::testing::Test {
 protected:
     const char* mountpoint = "/tmp/mountdir";
+
+    /**
+     * Create a new directory as mountpoint and run ./fuse to mount.
+     * @return
+     */
     void SetUp() override {
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
         testCommand(mkdir_cmd.c_str());
@@ -38,6 +31,10 @@ protected:
         testCommand(mount_cmd.c_str());
     }
 
+    /**
+     * Unmount the mountpoint and remove the directory.
+     * @return
+     */
     void TearDown() override {
         std::string unmount_cmd = "fusermount3 -u -z " + (std::string)mountpoint;
         testCommand(unmount_cmd.c_str());
@@ -48,6 +45,9 @@ protected:
 };
 
 
+/**
+ * Use 'touch' command to create a new file, and verify that it was successfully created.
+ */
 TEST_F(FuseIntegration, TouchToCreate) {
     const char* touchFile = "/tmp/mountdir/touch_file";
 
@@ -59,6 +59,9 @@ TEST_F(FuseIntegration, TouchToCreate) {
 }
 
 
+/**
+ * Use 'echo' command to create a new file, and verify that it was successfully created.
+ */
 TEST_F(FuseIntegration, EchoToCreate) {
     const char* echoFile = "/tmp/mountdir/echo_file";
     const char* content = "echo comment\n";

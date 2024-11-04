@@ -169,11 +169,11 @@ int fuse_getxattr(const char* path, const char* name, char* value, size_t size) 
 
 void send_mail(char* buf) {
 	//get command length to malloc
-	int command_length = 1 + strlen("echo \"") + strlen(buf) + strlen("\" | mail -s 'CS270 testing' brandon_lee@ucsb.edu");
+	int command_length = 1 + strlen("echo \"") + strlen(buf) + strlen("\" | mail -s 'CS270 testing' jiamingxu@ucsb.edu");
 	char* command = (char*)malloc(command_length * sizeof(char));
 	strcpy(command, "echo \"");
 	strcat(command, buf);
-	strcat(command, "\" | mail -s 'CS270 testing' brandon_lee@ucsb.edu");
+	strcat(command, "\" | mail -s 'CS270 testing' jiamingxu@ucsb.edu");
 	FILE *fp = popen(command, "w");
 	pclose(fp);
 	free(command);

@@ -8,24 +8,39 @@
 #include <fcntl.h>
 #include <cstdlib>
 #include "fuse_impl.h"
+#include "utils.h"
 
+
+/**
+ * Integration tests.
+ * Googletest will call SetUp() before each test case, and TearDown() after each test case.
+ */
 class FuseIntegration : public ::testing::Test {
 protected:
     const char* mountpoint = "/tmp/mountdir";
+
+    /**
+     * Create a new directory as mountpoint and run ./fuse to mount.
+     * @return
+     */
     void SetUp() override {
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
-        system(mkdir_cmd.c_str());
+        testCommand(mkdir_cmd.c_str());
 
         std::string mount_cmd = "./fuse " + (std::string)mountpoint;
-        system(mount_cmd.c_str());
+        testCommand(mount_cmd.c_str());
     }
 
+    /**
+     * Unmount the mountpoint and remove the directory.
+     * @return
+     */
     void TearDown() override {
         std::string unmount_cmd = "fusermount3 -u -z " + (std::string)mountpoint;
-        system(unmount_cmd.c_str());
+        testCommand(unmount_cmd.c_str());
 
         std::string rmdir_cmd = "rm -r " + (std::string)mountpoint;
-        system(rmdir_cmd.c_str());
+        testCommand(rmdir_cmd.c_str());
     }
 };
 
@@ -42,6 +57,9 @@ protected:
 // }
 
 
+/**
+ * Test 'open' a new file and 'write' to it.
+ */
 TEST_F(FuseIntegration, WriteNewFile) {
     const char* newFile = "/tmp/mountdir/new_file";
     const char* content = "write new file\n";
