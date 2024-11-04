@@ -15,8 +15,8 @@ add_compile_definitions(_FILE_OFFSET_BITS=64)
 include_directories(include /usr/include/fuse3)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable(270FileSystemProject ${SOURCES} main.cpp)
-target_link_libraries(270FileSystemProject fuse3)
+add_executable(fuse ${SOURCES} main.cpp)
+target_link_libraries(fuse fuse3)
 
 
 include(FetchContent)
@@ -31,31 +31,33 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
-add_executable(270FileSystemTests ${TEST_SOURCES} ${SOURCES})
-target_link_libraries(270FileSystemTests gtest_main fuse3)
+add_executable(fuseTests ${TEST_SOURCES} ${SOURCES})
+target_link_libraries(fuseTests gtest_main fuse3)
 
 file(GLOB_RECURSE INTEGRATION_SOURCES "integration/*.cpp")
-add_executable(270FileSystemIntegrations ${INTEGRATION_SOURCES} ${SOURCES})
-target_link_libraries(270FileSystemIntegrations gtest_main fuse3)
+add_executable(fuseIntegrations ${INTEGRATION_SOURCES} ${SOURCES})
+target_link_libraries(fuseIntegrations gtest_main fuse3)
 
 include(GoogleTest)
-gtest_discover_tests(270FileSystemTests)
-gtest_discover_tests(270FileSystemIntegrations)
+gtest_discover_tests(fuseTests)
+gtest_discover_tests(fuseIntegrations)
 
 # Custom build target for creating only the main executable
 add_custom_target(build
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target 270FileSystemProject
-    DEPENDS 270FileSystemProject
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fuse
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fuseTests
+    COMMAND fuseTests # Run the unit tests
+    DEPENDS fuse fuseTests
 )
 
 # Custom release target to build and run tests
 add_custom_target(release
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target 270FileSystemProject
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target 270FileSystemTests
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target 270FileSystemIntegrations
-    COMMAND 270FileSystemTests # Run the tests
-    COMMAND 270FileSystemIntegrations # Run the integration tests
-    DEPENDS 270FileSystemProject 270FileSystemTests 270FileSystemIntegrations
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fuse
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fuseTests
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fuseIntegrations
+    COMMAND fuseTests # Run the unit tests
+    COMMAND fuseIntegrations # Run the integration tests
+    DEPENDS fuse fuseTests fuseIntegrations
 )
 
 # Custom clean target to remove all build files

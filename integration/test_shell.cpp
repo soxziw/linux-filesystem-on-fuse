@@ -34,7 +34,7 @@ protected:
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
         testCommand(mkdir_cmd.c_str());
 
-        std::string mount_cmd = "./270FileSystemProject " + (std::string)mountpoint;
+        std::string mount_cmd = "./fuse " + (std::string)mountpoint;
         testCommand(mount_cmd.c_str());
     }
 
@@ -63,7 +63,7 @@ TEST_F(FuseIntegration, EchoToCreate) {
     const char* echoFile = "/tmp/mountdir/echo_file";
     const char* content = "echo comment\n";
 
-    std::string echo_cmd = "echo " + (std::string)content + " > " + (std::string)echoFile;
+    std::string echo_cmd = "echo \"" + (std::string)content + "\" > " + (std::string)echoFile;
     testCommand(echo_cmd.c_str());
 
     std::string test_cmd = "test " + (std::string)echoFile;

@@ -16,7 +16,7 @@ protected:
         std::string mkdir_cmd = "mkdir " + (std::string)mountpoint;
         system(mkdir_cmd.c_str());
 
-        std::string mount_cmd = "./270FileSystemProject " + (std::string)mountpoint;
+        std::string mount_cmd = "./fuse " + (std::string)mountpoint;
         system(mount_cmd.c_str());
     }
 

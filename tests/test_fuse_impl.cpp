@@ -20,17 +20,7 @@
 // };
 
 
-class FuseTest : public ::testing::Test {
-protected:
-    void SetUp() override {
-    }
-
-    void TearDown() override {
-    }
-};
-
-
-TEST_F(FuseTest, FuseOpen_newFile) {
+TEST(FuseTest, FuseOpen_newFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
@@ -41,7 +31,7 @@ TEST_F(FuseTest, FuseOpen_newFile) {
     ASSERT_EQ(res, 0);
 }
 
-TEST_F(FuseTest, FuseOpen_brandNewFile) {
+TEST(FuseTest, FuseOpen_brandNewFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
@@ -52,7 +42,7 @@ TEST_F(FuseTest, FuseOpen_brandNewFile) {
     ASSERT_EQ(res, -ENOENT);
 }
 
-TEST_F(FuseTest, FuseCreate_ExistFile) {
+TEST(FuseTest, FuseCreate_ExistFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
@@ -63,7 +53,7 @@ TEST_F(FuseTest, FuseCreate_ExistFile) {
     ASSERT_EQ(res, -EEXIST);
 }
 
-TEST_F(FuseTest, FuseCreate_CreateFile) {
+TEST(FuseTest, FuseCreate_CreateFile) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
@@ -72,7 +62,7 @@ TEST_F(FuseTest, FuseCreate_CreateFile) {
     ASSERT_EQ(res, 0);
 }
 
-TEST_F(FuseTest, FuseWrite_Write) {
+TEST(FuseTest, FuseWrite_Write) {
     for (int i = 0; i < OPEN_FILE_LIST_SIZE; i++) {
         open_files[i].filename.clear();
     }
