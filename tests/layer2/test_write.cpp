@@ -1,0 +1,9 @@
+#include <gtest/gtest.h>
+#include <string>
+#include <cstring>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <cstdlib>
+#include "layer2/write.h"

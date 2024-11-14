@@ -1,8 +1,9 @@
 #include <algorithm>
 #include "layer2/write.h"
-#include "layer2/utils.h"
+#include "layer2/translate_pos.h"
 #include "mock_layer0.h"
-
+// file_size 405
+// offset 18321
 int write(Inode* inode, const char* buf, size_t size, off_t offset) {
     if (inode == nullptr) {
         return -ENOENT;
@@ -34,5 +35,8 @@ int write(Inode* inode, const char* buf, size_t size, off_t offset) {
         offset += cur_size;
         size -= cur_size;
     }
+
+    inode->m_data.file_size = std::max(long(offset + size), inode->m_data.file_size);
+    write_inode_mdata(inode->m_data, inode->m_data.inode_num);
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "layer2/utils.h"
+#include "layer2/translate_pos.h"
 
 int access_inode_direct_block_num(Inode* inode, int idx, bool is_write) {
     if (inode->block_addrs[idx] == 0 && is_write) {
@@ -11,6 +11,8 @@ int access_inode_direct_block_num(Inode* inode, int idx, bool is_write) {
     return inode->block_addrs[idx];
 }
 
+// indirct with block num of indirect_block_num
+// 4k / 8 = 512 block num
 int access_inode_indirect_block_num(int indirect_block_num, int idx, bool is_write) {
     Block data;
     if (read_block(data, indirect_block_num)) {
@@ -52,6 +54,9 @@ int through_triple_indirect(int triple_indirect_block_num, int ind_block_idx, bo
     return 0;
 }
 
+// file a, offset 4097 => 4096 + 1
+// block_addr[1]
+// block_addr[14] == 0 ?
 int translate_pos(Inode* inode, Position* position, int infile_offset, bool is_write) {
     int infile_block_num = infile_offset / BLOCK_SIZE;
     if (infile_block_num < DIRECT_NUM) { // direct data block

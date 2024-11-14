@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <cerrno>
 #include "mock_layer1.h"
 
 /**

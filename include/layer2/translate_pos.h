@@ -1,3 +1,5 @@
+#include <iostream>
+#include <cerrno>
 #include "mock_layer1.h"
 
 #define OWNER_MODE 7
@@ -5,7 +7,7 @@
 #define OTHER_MODE 7 << 6
 
 
-#define BLOCK_ADDR_SIZE sizeof(unsigned long)
+#define BLOCK_ADDR_SIZE sizeof(long)
 #define BLOCK_SIZE 4096
 
 #define DIRECT_NUM 12
@@ -23,6 +25,7 @@ typedef struct Position {
     int offset;
 } Position;
 
+// block_address[15]
 static int access_inode_direct_block_num(Inode* inode, int idx, bool is_writed);
 
 static int access_inode_indirect_block_num(int indirect_block_num, int idx, bool is_writed);
@@ -53,4 +56,4 @@ static int through_triple_indirect(int triple_indirect_block_num, int ind_block_
  * @param infile_offset
  * @return
  */
-int translate_pos(Inode* inode, Position* position, int infile_offset, bool write = false);
+int translate_pos(Inode* inode, Position* position, int infile_offset, bool is_writed = false);

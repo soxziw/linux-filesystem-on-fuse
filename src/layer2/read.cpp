@@ -1,8 +1,12 @@
 #include <algorithm>
 #include "layer2/read.h"
-#include "layer2/utils.h"
+#include "layer2/translate_pos.h"
 #include "mock_layer0.h"
+#include "mock_layer1.h"
 
+// offset 405, size 80234
+// offset 405, size 4k - 405
+// offset 4k, size 4k
 int read(Inode* inode, char* buf, size_t size, off_t offset) {
     if (inode == nullptr) {
         return -ENOENT;
