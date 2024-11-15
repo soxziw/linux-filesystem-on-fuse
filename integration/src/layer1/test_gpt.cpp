@@ -3,211 +3,157 @@
 #include "gtest/gtest.h"
 #include <cstring>
 #include <ctime>
-#include "layer2/mock_layer1.h" // Include your Layer 1 header file
+#include <algorithm>
+#include "layer0/disk_interface.hpp"
+#include "layer1/data_structs.hpp" // Include your Layer 1 header file
 
-// Assuming that Layer 0 functions are properly implemented and available.
 
-class Layer1EndToEndTest : public ::testing::Test {
-protected:
-    void SetUp() override {
-        // Initialize the filesystem
-        int i_list_size = 1024; // Number of inode blocks
-        int d_block_size = 8192; // Number of data blocks
-        int res = init_fs(i_list_size, d_block_size);
-        ASSERT_EQ(res, 0); // Ensure filesystem initialization succeeds
-    }
+TEST(FilesystemTest, FullFileCycle) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
+    // Initialize the filesystem with i_list_size = 10 blocks and d_block_size = 10 blocks
+    ASSERT_EQ(init_fs(10, 10), 0);
 
-    void TearDown() override {
-        // Cleanup code if necessary
-    }
-};
+    // Allocate an inode for a regular file (file type = 0)
+    int inode_num = alloc_inode(0);
+    ASSERT_GE(inode_num, 0);  // Ensure allocation was successful
 
-// Test case: Create a file, write data, and read it back
-TEST_F(Layer1EndToEndTest, CreateFileWriteReadTest) {
-    // Step 1: Allocate an inode for a regular file
-    short file_type = 0; // Regular file
-    int inode_num = alloc_inode(file_type);
-    ASSERT_GE(inode_num, 0); // Ensure inode allocation succeeds
+    // Read the inode to verify it was properly created
+    Inode inode;
+    ASSERT_EQ(read_inode(inode_num, inode), 0);
 
-    // Step 2: Allocate a data block
+    // Allocate a block for this inode
     long block_num = alloc_block();
-    ASSERT_GE(block_num, 0); // Ensure block allocation succeeds
+    ASSERT_GT(block_num, 0);  // Ensure block allocation was successful
 
-    // Step 3: Write data to the block
-    Block data_block;
-    const char* content = "Hello, Layer 1!";
-    memset(&data_block, 0, sizeof(Block));
-    memcpy(data_block.dir_block, content, strlen(content) + 1);
+    // Write this block to the inode (block index 0)
+    ASSERT_EQ(write_inode(inode_num, block_num, 0), 0);
 
-    int res = write_block(data_block, block_num);
-    ASSERT_EQ(res, 0); // Ensure block write succeeds
+    // Verify the block is properly written by checking the inode
+    ASSERT_EQ(read_inode(inode_num, inode), 0);
+    ASSERT_EQ(inode.block_addrs[0], block_num);
 
-    // Step 4: Update the inode to point to the data block
-    int inode_idx = 0; // First direct block
-    res = write_inode(inode_num, block_num, inode_idx);
-    ASSERT_EQ(res, 0); // Ensure inode write succeeds
+    // Free the block
+    ASSERT_EQ(free_block(block_num), 0);
 
-    // Step 5: Update inode metadata
-    InodeMData m_data;
-    memset(&m_data, 0, sizeof(InodeMData));
-    m_data.inode_num = inode_num;
-    m_data.file_type = file_type;
-    m_data.file_size = strlen(content) + 1;
-    m_data.num_allocated_blocks = 1;
-    m_data.owner_id = 1000;
-    m_data.group_id = 1000;
-    m_data.mode = 0644;
-    m_data.atime = m_data.mtime = m_data.ctime = m_data.creation_time = std::time(nullptr);
+    // Free the inode  
+    ASSERT_EQ(free_inode(inode_num), 0);
 
-    res = write_inode_mdata(m_data, inode_num);
-    ASSERT_EQ(res, 0); // Ensure inode metadata write succeeds
-
-    // Step 6: Read the inode back and verify
-    Inode inode;
-    res = read_inode(inode_num, inode);
-    ASSERT_EQ(res, 0); // Ensure inode read succeeds
-    EXPECT_EQ(inode.m_data.file_size, m_data.file_size);
-    EXPECT_EQ(inode.block_addrs[inode_idx], block_num);
-
-    // Step 7: Read the data block and verify content
-    Block read_block;
-    res = read_block(read_block, block_num);
-    ASSERT_EQ(res, 0); // Ensure block read succeeds
-    EXPECT_STREQ(read_block.dir_block, content);
+    // Check that the inode is properly freed by attempting to read it    
+    ASSERT_LT(read_inode(inode_num, inode), 0);
 }
 
-// Test case: Create a directory and verify its entries
-TEST_F(Layer1EndToEndTest, CreateDirectoryTest) {
-    // Step 1: Allocate an inode for a directory
-    short file_type = 1; // Directory
-    int dir_inode_num = alloc_inode(file_type);
-    ASSERT_GE(dir_inode_num, 0); // Ensure inode allocation succeeds
+TEST(FilesystemTest, IndirectBlocks) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
+    // Initialize the filesystem
+    ASSERT_EQ(init_fs(10, 10), 0);
 
-    // Step 2: Allocate a data block for the directory
-    long dir_block_num = alloc_block();
-    ASSERT_GE(dir_block_num, 0); // Ensure block allocation succeeds
+    // Allocate an inode for a regular file (file type = 0)
+    int inode_num = alloc_inode(0);
+    ASSERT_GE(inode_num, 0);
 
-    // Step 3: Create "." and ".." entries
-    Block dir_block;
-    memset(&dir_block, 0, sizeof(Block));
+    // Read the inode
+    Inode inode;
+    ASSERT_EQ(read_inode(inode_num, inode), 0);
 
-    DirEntry dot_entry;
-    dot_entry.inode_num = dir_inode_num;
-    strcpy(dot_entry.name, ".");
-    memcpy(dir_block.dir_block, &dot_entry, sizeof(DirEntry));
+    // Allocate a block (direct block)
+    long block_num_1 = alloc_block();
+    ASSERT_GT(block_num_1, 0);
 
-    DirEntry dotdot_entry;
-    dotdot_entry.inode_num = dir_inode_num; // For simplicity, parent is self
-    strcpy(dotdot_entry.name, "..");
-    memcpy(dir_block.dir_block + sizeof(DirEntry), &dotdot_entry, sizeof(DirEntry));
+    // Allocate an indirect block
+    long ind_block = alloc_block();
+    ASSERT_GT(ind_block, 0);
 
-    // Step 4: Write the directory block
-    int res = write_block(dir_block, dir_block_num);
-    ASSERT_EQ(res, 0); // Ensure block write succeeds
+    // Allocate additional blocks to be linked via indirect block
+    long block_num_2 = alloc_block();
+    long block_num_3 = alloc_block();
+    ASSERT_GT(block_num_2, 0);
+    ASSERT_GT(block_num_3, 0);
 
-    // Step 5: Update the inode to point to the directory block
-    int inode_idx = 0; // First direct block
-    res = write_inode(dir_inode_num, dir_block_num, inode_idx);
-    ASSERT_EQ(res, 0); // Ensure inode write succeeds
+    // Set the indirect block to point to the new blocks
+    inode.block_addrs[12] = ind_block;
+    // Here, assuming the indirect block just points to these new blocks
+    Block ind_blk;
+    ind_blk.ind_blocks[0] = block_num_2;
+    ind_blk.ind_blocks[1] = block_num_3;
 
-    // Step 6: Update inode metadata
-    InodeMData m_data;
-    memset(&m_data, 0, sizeof(InodeMData));
-    m_data.inode_num = dir_inode_num;
-    m_data.file_type = file_type;
-    m_data.file_size = 2 * sizeof(DirEntry);
-    m_data.num_allocated_blocks = 1;
-    m_data.owner_id = 1000;
-    m_data.group_id = 1000;
-    m_data.mode = 0755;
-    m_data.atime = m_data.mtime = m_data.ctime = m_data.creation_time = std::time(nullptr);
+    // Write the indirect block to the inode
+    ASSERT_EQ(write_inode(inode_num, ind_block, 12), 0);
 
-    res = write_inode_mdata(m_data, dir_inode_num);
-    ASSERT_EQ(res, 0); // Ensure inode metadata write succeeds
+    // Verify the inode's indirect block
+    ASSERT_EQ(read_inode(inode_num, inode), 0);
+    ASSERT_EQ(inode.block_addrs[12], ind_block);
 
-    // Step 7: Read the inode back and verify
-    Inode dir_inode;
-    res = read_inode(dir_inode_num, dir_inode);
-    ASSERT_EQ(res, 0); // Ensure inode read succeeds
-    EXPECT_EQ(dir_inode.m_data.file_size, m_data.file_size);
-    EXPECT_EQ(dir_inode.block_addrs[inode_idx], dir_block_num);
-
-    // Step 8: Read the directory block and verify entries
-    Block read_dir_block;
-    res = read_block(read_dir_block, dir_block_num);
-    ASSERT_EQ(res, 0); // Ensure block read succeeds
-
-    DirEntry read_dot_entry;
-    memcpy(&read_dot_entry, read_dir_block.dir_block, sizeof(DirEntry));
-    EXPECT_EQ(read_dot_entry.inode_num, dir_inode_num);
-    EXPECT_STREQ(read_dot_entry.name, ".");
-
-    DirEntry read_dotdot_entry;
-    memcpy(&read_dotdot_entry, read_dir_block.dir_block + sizeof(DirEntry), sizeof(DirEntry));
-    EXPECT_EQ(read_dotdot_entry.inode_num, dir_inode_num);
-    EXPECT_STREQ(read_dotdot_entry.name, "..");
+    // Clean up
+    ASSERT_EQ(free_block(block_num_1), 0);
+    ASSERT_EQ(free_block(block_num_2), 0);
+    ASSERT_EQ(free_block(block_num_3), 0);
+    ASSERT_EQ(free_block(ind_block), 0);
+    ASSERT_EQ(free_inode(inode_num), 0);
 }
 
-// Test case: Write multiple blocks to a file and read them back
-TEST_F(Layer1EndToEndTest, MultiBlockFileTest) {
-    // Step 1: Allocate an inode for a regular file
-    short file_type = 0; // Regular file
-    int inode_num = alloc_inode(file_type);
-    ASSERT_GE(inode_num, 0); // Ensure inode allocation succeeds
 
-    // Step 2: Allocate multiple data blocks and write data
-    const int num_blocks = 5;
-    const char* data_contents[num_blocks] = {
-        "Data block 1",
-        "Data block 2",
-        "Data block 3",
-        "Data block 4",
-        "Data block 5"
-    };
-    for (int i = 0; i < num_blocks; ++i) {
-        long block_num = alloc_block();
-        ASSERT_GE(block_num, 0); // Ensure block allocation succeeds
+TEST(FilesystemTest, FileDeletionAndFreeList) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
+    // Initialize the filesystem
+    ASSERT_EQ(init_fs(10, 10), 0);
 
-        // Write data to block
-        Block data_block;
-        memset(&data_block, 0, sizeof(Block));
-        memcpy(data_block.dir_block, data_contents[i], strlen(data_contents[i]) + 1);
+    // Allocate an inode for a regular file (file type = 0)
+    int inode_num = alloc_inode(0);
+    ASSERT_GE(inode_num, 0);
 
-        int res = write_block(data_block, block_num);
-        ASSERT_EQ(res, 0); // Ensure block write succeeds
+    // Allocate multiple blocks
+    long block_num_1 = alloc_block();
+    long block_num_2 = alloc_block();
+    ASSERT_GT(block_num_1, 0);
+    ASSERT_GT(block_num_2, 0);
 
-        // Update inode with block number
-        res = write_inode(inode_num, block_num, i);
-        ASSERT_EQ(res, 0); // Ensure inode write succeeds
-    }
+    // Write blocks to inode
+    ASSERT_EQ(write_inode(inode_num, block_num_1, 0), 0);
+    ASSERT_EQ(write_inode(inode_num, block_num_2, 1), 0);
 
-    // Step 3: Update inode metadata
-    InodeMData m_data;
-    memset(&m_data, 0, sizeof(InodeMData));
-    m_data.inode_num = inode_num;
-    m_data.file_type = file_type;
-    m_data.file_size = num_blocks * BLOCK_SIZE;
-    m_data.num_allocated_blocks = num_blocks;
-    m_data.owner_id = 1000;
-    m_data.group_id = 1000;
-    m_data.mode = 0644;
-    m_data.atime = m_data.mtime = m_data.ctime = m_data.creation_time = std::time(nullptr);
-
-    int res = write_inode_mdata(m_data, inode_num);
-    ASSERT_EQ(res, 0); // Ensure inode metadata write succeeds
-
-    // Step 4: Read inode back and verify
+    // Verify the inode data
     Inode inode;
-    res = read_inode(inode_num, inode);
-    ASSERT_EQ(res, 0); // Ensure inode read succeeds
-    EXPECT_EQ(inode.m_data.num_allocated_blocks, num_blocks);
+    ASSERT_EQ(read_inode(inode_num, inode), 0);
+    ASSERT_EQ(inode.block_addrs[0], block_num_1);
+    ASSERT_EQ(inode.block_addrs[1], block_num_2);
 
-    // Step 5: Read data blocks back and verify content
-    for (int i = 0; i < num_blocks; ++i) {
-        long block_num = inode.block_addrs[i];
-        Block read_block;
-        res = read_block(read_block, block_num);
-        ASSERT_EQ(res, 0); // Ensure block read succeeds
-        EXPECT_STREQ(read_block.dir_block, data_contents[i]);
-    }
+    // Delete blocks from the inode
+    ASSERT_EQ(delete_from_inode(inode_num, block_num_1), 0);
+    ASSERT_EQ(delete_from_inode(inode_num, block_num_2), 0);
+
+    // Free the blocks
+    ASSERT_EQ(free_block(block_num_1), 0);
+    ASSERT_EQ(free_block(block_num_2), 0);
+
+    // Free the inode
+    ASSERT_EQ(free_inode(inode_num), 0);
+
+    // Read the free list and check if blocks are returned
+    std::vector<Block> free_list;
+    ASSERT_EQ(read_free_list(free_list), 0);
+    ASSERT_TRUE(std::find_if(free_list.begin(), free_list.end(),
+                             [&](const Block& b) { return std::find(std::begin(b.ind_blocks), std::end(b.ind_blocks), block_num_1) != std::end(b.ind_blocks); }) != free_list.end());
+    ASSERT_TRUE(std::find_if(free_list.begin(), free_list.end(),
+                             [&](const Block& b) { return std::find(std::begin(b.ind_blocks), std::end(b.ind_blocks), block_num_2) != std::end(b.ind_blocks); }) != free_list.end());
+
+    // Check if the inode is freed
+    Inode tmp_inode;
+    ASSERT_LT(read_inode(inode_num, tmp_inode), 0);
+}
+
+TEST(FilesystemTest, FreeListOperations) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
+    // Initialize the filesystem
+    ASSERT_EQ(init_fs(10, 10), 0);
+
+    // Allocate a block and free it
+    long block_num = alloc_block();
+    ASSERT_GT(block_num, 0);
+    ASSERT_EQ(free_block(block_num), 0);
+
+    // Verify that the block appears in the free list
+    std::vector<Block> free_list;
+    ASSERT_EQ(read_free_list(free_list), 0);
+    ASSERT_TRUE(std::find_if(free_list.begin(), free_list.end(),
+                             [&](const Block& b) { return std::find(std::begin(b.ind_blocks), std::end(b.ind_blocks), block_num) != std::end(b.ind_blocks); }) != free_list.end());
 }

@@ -1,6 +1,8 @@
+#define FUSE_USE_VERSION 31
+
 #include <fuse.h>
 #include <cerrno>
-#include "mock_layer1.h"
+#include "layer1/data_structs.hpp"
 
 
 /**

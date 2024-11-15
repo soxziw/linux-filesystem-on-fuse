@@ -1,7 +1,7 @@
 #include <algorithm>
 #include "layer2/write.h"
 #include "layer2/translate_pos.h"
-#include "mock_layer0.h"
+#include "layer0/disk_interface.hpp"
 // file_size 405
 // offset 18321
 int write(Inode* inode, const char* buf, size_t size, off_t offset) {

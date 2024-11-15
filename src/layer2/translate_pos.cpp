@@ -1,4 +1,5 @@
 #include "layer2/translate_pos.h"
+#include "layer0/disk_interface.hpp"
 
 int access_inode_direct_block_num(Inode* inode, int idx, bool is_write) {
     if (inode->block_addrs[idx] == 0 && is_write) {
@@ -15,7 +16,7 @@ int access_inode_direct_block_num(Inode* inode, int idx, bool is_write) {
 // 4k / 8 = 512 block num
 int access_inode_indirect_block_num(int indirect_block_num, int idx, bool is_write) {
     Block data;
-    if (read_block(data, indirect_block_num)) {
+    if (read_from_block((char*)&data, indirect_block_num, 0, BLOCK_SIZE)) {
         std::cerr << "Error: touch indirect block error. " 
                     << "indirect_block_num: " << indirect_block_num << "." << std::endl;
         return 0;
@@ -24,7 +25,7 @@ int access_inode_indirect_block_num(int indirect_block_num, int idx, bool is_wri
         int new_block_num = alloc_block();
         if (new_block_num != -1) {
             data.ind_blocks[idx] = new_block_num;
-            write_block(data, indirect_block_num);
+            write_to_block((const char*)&data, indirect_block_num, 0, BLOCK_SIZE);
         }
     }
     return data.ind_blocks[idx];

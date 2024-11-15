@@ -6,43 +6,49 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdlib>
-#include "layer2/mock_layer0.h"
+#include <cstring>
+#include "layer0/disk_interface.hpp"
 
-TEST(FuseIntegration, Layer0_WriteReadToSameBlock) {
+
+TEST(FuseIntegration, Layer0_WriteReadToSameArea) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
     int status;
 
     const char* content = "test component\n";
-    status = write_to_block(content, 0, 0, sizeof(content));
-    ASSERT_EQ(status, sizeof(content));
+    status = write_to_block(content, 0, 0, strlen(content));
+    ASSERT_EQ(status, strlen(content));
+    ASSERT_EQ('p', in_mem_disk[8]);
 
-    char* new_content;
-    status = read_from_block(new_content, 0, 0, sizeof(content));
-    ASSERT_EQ(status, sizeof(content));
+    char* new_content = new char[strlen(content)];
+    status = read_from_block(new_content, 0, 0, strlen(content));
+    ASSERT_EQ(status, strlen(content));
     ASSERT_STREQ(content, new_content);
 }
 
-TEST(FuseIntegration, Layer0_WriteReadToDiffBlock) {
+TEST(FuseIntegration, Layer0_WriteReadToDiffArea) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
     int status;
 
     const char* content = "test component\n";
-    status = write_to_block(content, 0, 0, sizeof(content));
-    ASSERT_EQ(status, sizeof(content));
+    status = write_to_block(content, 0, 0, strlen(content));
+    ASSERT_EQ(status, strlen(content));
 
-    char* new_content;
-    status = read_from_block(new_content, 1, 0, sizeof(content));
-    ASSERT_EQ(status, -1);
+    char* new_content = new char[strlen(content)];
+    status = read_from_block(new_content, 1, 0, strlen(content));
+    ASSERT_EQ(status, strlen(content));
     ASSERT_STRNE(content, new_content);
 }
 
 TEST(FuseIntegration, Layer0_WriteReadToEndOfBlock) {
+    in_mem_disk[FILE_SYS_SIZE] = {};
     int status;
 
     const char* content = "test component\n";
-    status = write_to_block(content, 0, 4096 - sizeof(content), sizeof(content));
-    ASSERT_EQ(status, sizeof(content));
+    status = write_to_block(content, 0, 4096 - 1 - strlen(content), strlen(content));
+    ASSERT_EQ(status, strlen(content));
 
-    char* new_content;
-    status = read_from_block(new_content, 0, 4096 - sizeof(content), sizeof(content));
-    ASSERT_EQ(status, sizeof(content));
+    char* new_content = new char[strlen(content)];
+    status = read_from_block(new_content, 0, 4096 - 1 - strlen(content), strlen(content));
+    ASSERT_EQ(status, strlen(content));
     ASSERT_STREQ(content, new_content);
 }

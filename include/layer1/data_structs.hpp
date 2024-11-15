@@ -5,8 +5,8 @@
 #include <cstdint> 
 #include <string.h>
 #include <vector>
+#include "utils.hpp"
 
-#define BLOCK_SIZE 4096
 #define ROOT_INODE_NUM 0
 
 //superblock should contain inode number for root path
@@ -125,11 +125,5 @@ extern int read_free_list(std::vector<Block>& f_list);
 
 //prints free list
 extern void print_free_list(std::vector<Block>& f_list);
-
-//template function to compare arrays
-template <typename T, size_t N>
-bool array_equal(const T (&a)[N], const T (&b)[N]) {
-    return std::equal(std::begin(a), std::end(a), std::begin(b));
-}
 
 #endif
