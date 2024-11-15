@@ -28,7 +28,7 @@ int write(Inode* inode, const char* buf, size_t size, off_t offset) {
             return -errno;
         }
         size_t cur_size = std::min(size_t(BLOCK_SIZE - pos->offset), size); 
-        if ((status = write((const void*)buf, pos->block_num, pos->offset, cur_size)) != cur_size) {
+        if ((status = write_to_block(buf, pos->block_num, pos->offset, cur_size)) != cur_size) {
             return -errno;
         }
         buf += cur_size;

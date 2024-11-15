@@ -22,11 +22,11 @@ int read(Inode* inode, char* buf, size_t size, off_t offset) {
         pos->offset = 0;
         int status;
         if ((status = translate_pos(inode, pos, offset)) != 0) {
-            return -errno;
+            return -EINVAL;
         }
         size_t cur_size = std::min(size_t(BLOCK_SIZE - pos->offset), size); 
-        if ((status = read((void*)buf, pos->block_num, pos->offset, cur_size)) != cur_size) {
-            return -errno;
+        if ((status = read_from_block(buf, pos->block_num, pos->offset, cur_size)) != cur_size) {
+            return -EIO;
         }
         buf += cur_size;
         offset += cur_size;

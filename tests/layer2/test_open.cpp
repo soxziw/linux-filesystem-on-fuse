@@ -13,8 +13,14 @@ TEST(FuseTest, Layer2_Open_InvalidInode) {
     ASSERT_EQ(status, -ENOENT);
 }
 
+TEST(FuseTest, Layer2_Open_ValidInodeInvalidPermission) {
+    Inode* file_inode = new Inode;
+    int status = open(file_inode, (1 << 10) - 1, new fuse_context);
+    ASSERT_EQ(status, -EACCES);
+}
+
 TEST(FuseTest, Layer2_Open_ValidInode) {
-    Inode* inode = new Inode;
-    int status = open(inode, (1<<10) - 1, nullptr);
+    Inode* file_inode = new Inode;
+    int status = open(file_inode, 0, new fuse_context);
     ASSERT_EQ(status, 0);
 }

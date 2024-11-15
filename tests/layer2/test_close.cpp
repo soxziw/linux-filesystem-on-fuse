@@ -14,7 +14,7 @@ TEST(FuseTest, Layer2_Close_InvalidInode) {
 }
 
 TEST(FuseTest, Layer2_Close_ValidInode) {
-    Inode* inode = new Inode;
-    int status = close(inode);
+    Inode* file_inode = new Inode;
+    int status = close(file_inode);
     ASSERT_EQ(status, 0);
 }

@@ -5,7 +5,7 @@ int access_inode_direct_block_num(Inode* inode, int idx, bool is_write) {
         int new_block_num = alloc_block();
         if (new_block_num != -1) {
             inode->block_addrs[idx] = new_block_num;
-            write_inode(inode->m_data.inode_num, inode->block_addrs);
+            write_inode(inode->m_data.inode_num, new_block_num, idx);
         }
     }
     return inode->block_addrs[idx];

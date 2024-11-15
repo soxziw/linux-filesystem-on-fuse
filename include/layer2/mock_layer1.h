@@ -35,9 +35,9 @@ typedef struct InodeMData { //size (padded): 72 bytes
     int group_id; //user id of group owner (parent directory)
     int device_id; //used for files that are devices
     long file_size;
-    //not implementing preferred block size metadata
     int num_allocated_blocks;
     short file_type; //reg file, directory, or special file (device)
+    bool is_allocated;
 
     //time_t is a long
     time_t atime; //last access time in unix timestamp
@@ -56,21 +56,21 @@ typedef struct InodeMData { //size (padded): 72 bytes
 
 typedef struct Inode {
     //indices 0-11 are direct data blocks, 12 is single indirect, 13 is double indirect, 14 is triple indirect
-    int block_addrs[15]; 
-    InodeMData m_data;
-    char padding[112]; //padding for inode to be 256 bytes
+    long block_addrs[15]; //might need to make these of type long
+    InodeMData m_data; //TODO: make sure padding is correct
+    char padding[48]; //padding for inode to be 256 bytes
     bool operator == (const Inode& in) {
         return array_equal(block_addrs, in.block_addrs) && m_data == in.m_data && array_equal(padding, in.padding);
     }
-} inode;
+} Inode;
 
 //union so that a block can describe an i-node block, direct block, free data block, indirect block
 typedef union Block {
     char dir_block[BLOCK_SIZE];
+    // DirEntry dir_entries[BLOCK_SIZE/sizeof(DirEntry)]; For Yuchen's mkdir
     long ind_blocks[BLOCK_SIZE/sizeof(unsigned long)]; //this can be used either as a block in the free list or an indirect block
     Inode inode_block[BLOCK_SIZE/sizeof(Inode)]; //16 inodes per block
     SuperBlock super;
-
     //possible TODO: write == operator for Block
 } Block;
 
@@ -84,33 +84,46 @@ extern int alloc_inode(const short file_type);
 //deallocates inode when ref count = =
 extern int free_inode(const int inode_num);
 
-//returns success/error code, and populates inode with all inode data
+//on success, populates inode with all inode data and returns 0. Otherwise returns negative number
 extern int read_inode(const int inode_num, Inode& inode);
 
-//helper function for namei. Not sure if we should implement this in layer 1 or 2
-extern int get_inode_num(const char path[]);
+//updates inode blocks[]. n is the size of block_nums (should be 15). Not sure how it'll work when some data blocks in the inode are freed
+//this is probably a useless function. write_data_block and append_data_block are likely more useful
+// extern int write_inode(const int inode_num, const int block_nums[], const int n);
 
-//updates inode blocks[]. Not sure how it'll work when some data blocks in the inode are freed
-extern int write_inode(const int inode_num, const int block_nums[]);
+//writes a single data block to an inode at a given index. Returns 0 on success, otherwise -1
+//TODO: update Inode M_data file size field
+extern int write_inode(const int inode_num, const long block_num, const int inode_idx);
 
 //can be used to unlink a file
 extern int write_inode_mdata(const InodeMData m_data, const int inode_num); 
 
-//returns block number on success, otherwise -1
-extern int alloc_block(); 
+//deletes block_num that is present in inode_num. Could be direct, single indirect, double indirect
+//Not testing for this now, as we're not worrying about truncate for now
+extern int delete_from_inode(const int inode_num, const long target_block_addr);
+
+//returns block number on success, and removes block address from the free list
+extern long alloc_block(); 
 
 //deallocates block/puts back on free list, 0 on sucess, otherwise -1
 extern int free_block(const int block_num);
 
-//data is size 4096; 0 on success, and populates DBlock with data. otherwise returns -1
-extern int read_block(Block& data, const int block_num);
+//recursively deletes all blocks inside indirect block, then frees indirect block.
+//Returns 0 on success, otherwise negative no.
+extern int free_ind_block(const long block_num);
 
-//returns 0 on success, otherwise -1
-extern int write_block(const Block data, const int block_num);
+//recursively deletes all blocks inside double indirect block (calling free_ind_block), then frees indirect block.
+//Returns 0 on success, otherwise negative no.
+extern int free_d_ind_block(const long block_num);
+
+//recursively deletes all blocks inside double indirect block (calling free_ind_block), then frees indirect block.
+//Returns 0 on success, otherwise negative no.
+extern int free_t_ind_block(const long block_num);
 
 //returns 0 on sucess and populates f_list with file system's free list, otherwise -1
 extern int read_free_list(std::vector<Block>& f_list);
 
+//prints free list
 extern void print_free_list(std::vector<Block>& f_list);
 
 //template function to compare arrays
