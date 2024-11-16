@@ -2,11 +2,6 @@
 #include <cerrno>
 #include "layer1/data_structs.hpp"
 
-#define OWNER_MODE 7
-#define GROUP_MODE 7 << 3
-#define OTHER_MODE 7 << 6
-
-
 #define BLOCK_ADDR_SIZE sizeof(long)
 #define BLOCK_SIZE 4096
 

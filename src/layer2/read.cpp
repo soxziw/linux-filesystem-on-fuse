@@ -11,6 +11,9 @@ int read(Inode* inode, char* buf, size_t size, off_t offset) {
     if (inode == nullptr) {
         return -ENOENT;
     }
+    if (inode->m_data.file_type == FILE_TYPE::DIR) {
+        return -EISDIR;
+    }
     if (size == 0 || inode->m_data.file_size <= offset) {
         return 0;
     }
