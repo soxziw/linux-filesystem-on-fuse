@@ -11,7 +11,7 @@
 
 
 TEST(FuseIntegration, Layer0_WriteReadToSameArea) {
-    in_mem_disk[FILE_SYS_SIZE] = {};
+    memset(in_mem_disk, 0, sizeof(in_mem_disk));
     int status;
 
     const char* content = "test component\n";
@@ -26,7 +26,7 @@ TEST(FuseIntegration, Layer0_WriteReadToSameArea) {
 }
 
 TEST(FuseIntegration, Layer0_WriteReadToDiffArea) {
-    in_mem_disk[FILE_SYS_SIZE] = {};
+    memset(in_mem_disk, 0, sizeof(in_mem_disk));
     int status;
 
     const char* content = "test component\n";
@@ -40,7 +40,7 @@ TEST(FuseIntegration, Layer0_WriteReadToDiffArea) {
 }
 
 TEST(FuseIntegration, Layer0_WriteReadToEndOfBlock) {
-    in_mem_disk[FILE_SYS_SIZE] = {};
+    memset(in_mem_disk, 0, sizeof(in_mem_disk));
     int status;
 
     const char* content = "test component\n";
