@@ -18,10 +18,12 @@ make clean
 ## E2E / Integration tests
 
 > My tests will use the Linux POSIX interface and I will expect your file system to generate the same results when a test runs on a Linux file system and on your file system. Thus you should consider writing as many (and as varied) tests using the POSIX interface and comparing the tests when run on a native Linux file system to one run on yours.
+> 
 > I will also test your file system using "standard" Linux system utilities and tools. Examples include, but are not limited to, the various language compilers (gcc, g++, gfortran, etc.), git, make, bash, grep, awk, sed, ls, and find. You should consider writing tests that use these utilities to access files on your file system as well. At this point you should also write stress tests that do lots of operations with different sizes and offsets to make sure that your file system doesn't have a latent bug or two.
-> - Prof. Rich Wolski
+> 
+> -Prof. Rich Wolski
 
-Command line
+### Command line
 ```bash
 // Compilers
 gcc / g++ / gfortran / ...
@@ -41,7 +43,7 @@ ls
 find
 ```
 
-POSIX interface
+### POSIX interface
 ```c
 // File descriptor operations
 int open(const char *pathname, int flags);
