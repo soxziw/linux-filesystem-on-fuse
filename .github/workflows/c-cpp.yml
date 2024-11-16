@@ -21,7 +21,7 @@ jobs:
     - name: Set up Clang
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang clang++ cmake build-essential
+        sudo apt-get install -y clang-15 clang++-15 cmake build-essential
 
     # Step 3: Set Clang as the C and C++ compiler
     - name: Set up CMake with Clang
