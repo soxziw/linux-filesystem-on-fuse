@@ -18,10 +18,11 @@ jobs:
     - uses: actions/checkout@v4
 
     # Step 2: Set up Clang and other dependencies
-    - name: Set up Clang
+    - name: Set up Clang and Fuse3
       run: |
         sudo apt-get update
         sudo apt-get install -y clang-15 clang++-15 cmake build-essential
+        sudo apt-get install -y libfuse3-dev
 
     # Step 3: Set Clang as the C and C++ compiler
     - name: Set up CMake with Clang
@@ -36,19 +37,19 @@ jobs:
 
     # Step 5: Configure the project using CMake
     - name: Configure project
-      run: cd build && cmake .. > /dev/null 2>&1
+      run: cmake -B build -S .
 
     # Step 6: Build the project and run unit tests
     - name: Build the project and run unit tests
-      run: cd build && make build | grep -vE "make\[[0-9]+\]"
+      run: make -C build build | grep -vE "make\[[0-9]+\]"
 
     # Step 7: Run E2E/integration tests
     - name: Run E2E/integration tests
-      run: cd build && make release | grep -vE "make\[[0-9]+\]"
+      run: make -C build release | grep -vE "make\[[0-9]+\]"
 
     # Step 8: Clean up build artifacts
     - name: Clean up build
-      run: cd build && make cleanup | grep -vE "make\[[0-9]+\]"
+      run: make -C build cleanup | grep -vE "make\[[0-9]+\]"
 
     # Step 9: Optionally remove the build directory (cleanup)
     - name: Remove build directory
