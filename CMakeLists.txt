@@ -62,6 +62,6 @@ add_custom_target(release
 
 # Custom clean target to remove all build files
 add_custom_target(cleanup
-    COMMAND ${CMAKE_COMMAND} rm -rf ${CMAKE_BINARY_DIR}/*
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/*
     COMMENT "Cleaning all build files..."
 )
