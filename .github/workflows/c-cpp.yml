@@ -17,30 +17,39 @@ jobs:
     # Step 1: Checkout the code from the repository
     - uses: actions/checkout@v4
 
-    # Step 2: Set up the build environment (install dependencies if needed)
-    - name: Set up CMake
-      run: sudo apt-get install -y cmake build-essential
+    # Step 2: Set up Clang and other dependencies
+    - name: Set up Clang
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-15 clang++-15 cmake build-essential
 
-    # Step 3: Create the build directory
+    # Step 3: Set Clang as the C and C++ compiler
+    - name: Set up CMake with Clang
+      run: |
+        export CC=clang
+        export CXX=clang++
+        cmake --version  # Check the version of CMake and Clang
+
+    # Step 4: Create the build directory
     - name: Create build directory
       run: mkdir -p build
 
-    # Step 4: Configure the project using CMake
+    # Step 5: Configure the project using CMake
     - name: Configure project
       run: cd build && cmake .. > /dev/null 2>&1
 
-    # Step 5: Build the project and run unit tests
+    # Step 6: Build the project and run unit tests
     - name: Build the project and run unit tests
       run: cd build && make build | grep -vE "make\[[0-9]+\]"
 
-    # Step 6: Run E2E/integration tests
+    # Step 7: Run E2E/integration tests
     - name: Run E2E/integration tests
       run: cd build && make release | grep -vE "make\[[0-9]+\]"
 
-    # Step 7: Clean up build artifacts
+    # Step 8: Clean up build artifacts
     - name: Clean up build
       run: cd build && make cleanup | grep -vE "make\[[0-9]+\]"
 
-    # Step 8: Optionally remove the build directory (cleanup)
+    # Step 9: Optionally remove the build directory (cleanup)
     - name: Remove build directory
       run: rm -rf build
