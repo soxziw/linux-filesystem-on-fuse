@@ -51,7 +51,7 @@ int init_fs(long i_list_size, long d_block_size) {
                     .device_id = -1,
                     .file_size = -1,
                     .num_allocated_blocks = 0,
-                    .file_type = -1,
+                    .file_type = 1,
                     .is_allocated = ((short int)((i * (BLOCK_SIZE/sizeof(Inode)) + j) == 0) ? true : false), //root inode num is allocated upon mkfs
                     .atime = -1,
                     .creation_time = -1,
@@ -112,6 +112,7 @@ int alloc_inode(const short file_type) {
             InodeMData inode_md = inode_block.inode_block[j].m_data;
             if (!inode_md.is_allocated) {
                 inode_block.inode_block[j].m_data.is_allocated = true;
+                inode_block.inode_block[j].m_data.file_type = file_type;
                 inode_ret = inode_md.inode_num;
                 found_free_inode = true;
             }
@@ -204,7 +205,7 @@ int read_inode(const int inode_num, Inode& inode) {
     int res = read_from_block((char*)&sup, 0, 0, BLOCK_SIZE);
     if (res != BLOCK_SIZE)
         return res;
-    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num <= 0)
+    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num < 0)
         return -3; 
     int block_addr = inode_num / (BLOCK_SIZE / sizeof(Inode)) + 1;
     int inode_block_ind = inode_num % (BLOCK_SIZE / sizeof(Inode));
@@ -258,7 +259,7 @@ int write_inode(const int inode_num, const long block_num, const int inode_ind) 
         return res;
 
     //check if inode_num is out of range
-    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num <= 0)
+    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num < 0)
         return -3; 
 
     int block_addr = inode_num / (BLOCK_SIZE / sizeof(Inode)) + 1;
@@ -284,7 +285,7 @@ int write_inode_mdata(const InodeMData m_data, const int inode_num) {
         return res;
 
     //check if inode_num is out of range
-    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num <= 0)
+    if (inode_num >= (BLOCK_SIZE/sizeof(Inode) * sup.super.i_list_size) || inode_num < 0)
         return -3; 
     int block_addr = inode_num / (BLOCK_SIZE / sizeof(Inode)) + 1;
     int inode_block_ind = inode_num % (BLOCK_SIZE / sizeof(Inode));
@@ -310,33 +311,39 @@ extern int delete_from_inode(const int inode_num, const long target_block_addr) 
 }
 
 long alloc_block() {
+    int res;
     Block sup;
-    int res = read_from_block((char*)&sup, 0, 0, BLOCK_SIZE);
+    res = read_from_block((char*)&sup, 0, 0, BLOCK_SIZE);
     if (res != BLOCK_SIZE)
         return res;
     long free_head = sup.super.free_head;
     //check if free list is empty. If so return error
     if (free_head == -1) // Fix typo of use "="
         return -1;
+    
     bool found_free_block = false;
     long block_addr;
     Block free_node;
-    while (free_head != -1 && !found_free_block) {
-        int res = read_from_block((char*)&free_node, free_head, 0, BLOCK_SIZE);
-        if (res != BLOCK_SIZE)
-            return res;
-        int i = 1;
-        while (!found_free_block && i < (BLOCK_SIZE / sizeof(long))) {
-            long curr_block_addr = free_node.ind_blocks[i];
-            if (curr_block_addr != 0) {
-                found_free_block = true;
-                block_addr = curr_block_addr;
-            }
-            i++;
+    res = read_from_block((char*)&free_node, free_head, 0, BLOCK_SIZE);
+    if (res != BLOCK_SIZE)
+        return res;
+    int i = 1;
+    while (!found_free_block && i < (BLOCK_SIZE / sizeof(long))) {
+        long curr_block_addr = free_node.ind_blocks[i];
+        if (curr_block_addr != 0) {
+            found_free_block = true;
+            block_addr = curr_block_addr;
+            free_node.ind_blocks[i] = 0;
+            write_to_block((const char*)&free_node, free_head, 0, BLOCK_SIZE);
         }
-        free_head = free_node.ind_blocks[0];
+        i++;
     }
-    return found_free_block ? block_addr : -1;
+    if (!found_free_block) {
+        block_addr = free_head;
+        sup.super.free_head = free_node.ind_blocks[0];
+        write_to_block((const char*)&sup, 0, 0, BLOCK_SIZE);
+    }
+    return block_addr;
 }
 
 //TODO: update metadata after freeing block

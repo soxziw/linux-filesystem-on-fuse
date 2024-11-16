@@ -7,7 +7,7 @@
 #include <array>
 #include "layer1/data_structs.hpp"
 
-#define PARTITION_SIZE 100 //partition size in blocks
+#define PARTITION_SIZE 1000 //partition size in blocks
 #define FILE_SYS_SIZE PARTITION_SIZE * BLOCK_SIZE
 
 extern char in_mem_disk[FILE_SYS_SIZE]; 
