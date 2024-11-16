@@ -51,7 +51,7 @@ int init_fs(long i_list_size, long d_block_size) {
                     .device_id = -1,
                     .file_size = -1,
                     .num_allocated_blocks = 0,
-                    .file_type = 1,
+                    .file_type = FILE_TYPE::DIR,
                     .is_allocated = ((short int)((i * (BLOCK_SIZE/sizeof(Inode)) + j) == 0) ? true : false), //root inode num is allocated upon mkfs
                     .atime = -1,
                     .creation_time = -1,
@@ -186,7 +186,7 @@ int free_inode(const int inode_num) {
         .device_id = -1,
         .file_size = -1,
         .num_allocated_blocks = 0,
-        .file_type = -1,
+        .file_type = FILE_TYPE::EMPTY,
         .is_allocated = 0,
         .atime = -1,
         .creation_time = -1,

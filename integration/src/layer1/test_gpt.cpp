@@ -32,7 +32,7 @@ TEST_F(FileSystemTest, SuperBlockInitialization) {
 
 // Test: Inode Allocation and Read
 TEST_F(FileSystemTest, InodeAllocationAndRead) {
-    int inode_num = alloc_inode(1); // Allocate a regular file inode
+    int inode_num = alloc_inode(FILE_TYPE::DIR); // Allocate a regular file inode
     ASSERT_GT(inode_num, 0);
 
     Inode inode;
@@ -40,12 +40,12 @@ TEST_F(FileSystemTest, InodeAllocationAndRead) {
     ASSERT_EQ(res, 0);
     ASSERT_EQ(inode.m_data.inode_num, (unsigned long)inode_num);
     ASSERT_TRUE(inode.m_data.is_allocated);
-    ASSERT_EQ(inode.m_data.file_type, 1);
+    ASSERT_EQ(inode.m_data.file_type, FILE_TYPE::DIR);
 }
 
 // Test: Inode Deallocation
 TEST_F(FileSystemTest, InodeDeallocation) {
-    int inode_num = alloc_inode(1);
+    int inode_num = alloc_inode(FILE_TYPE::DIR);
     ASSERT_GT(inode_num, 0);
 
     int res = free_inode(inode_num);
@@ -67,7 +67,7 @@ TEST_F(FileSystemTest, BlockAllocationAndFreeing) {
 
 // Test: Write and Read Data from Inode
 TEST_F(FileSystemTest, WriteAndReadInode) {
-    int inode_num = alloc_inode(1);
+    int inode_num = alloc_inode(FILE_TYPE::DIR);
     ASSERT_GT(inode_num, 0);
 
     long block_num = alloc_block();
@@ -106,14 +106,14 @@ TEST_F(FileSystemTest, InitFileSystem) {
 
 // Test 2: Allocate and Free Inode
 TEST_F(FileSystemTest, AllocFreeInode) {
-    int inode_num = alloc_inode(0);
+    int inode_num = alloc_inode(FILE_TYPE::REG_FILE);
     ASSERT_GT(inode_num, 0);
 
     Inode inode;
     int status = read_inode(inode_num, inode);
     ASSERT_EQ(status, 0);
     ASSERT_TRUE(inode.m_data.is_allocated);
-    ASSERT_EQ(inode.m_data.file_type, 0);
+    ASSERT_EQ(inode.m_data.file_type, FILE_TYPE::REG_FILE);
 
     status = free_inode(inode_num);
     ASSERT_EQ(status, 0);
@@ -156,7 +156,7 @@ TEST_F(FileSystemTest, RootInodeInitialization) {
     ASSERT_EQ(status, 0);
 
     ASSERT_TRUE(root_inode.m_data.is_allocated);
-    ASSERT_EQ(root_inode.m_data.file_type, 1);
+    ASSERT_EQ(root_inode.m_data.file_type, FILE_TYPE::DIR);
     ASSERT_EQ(root_inode.m_data.inode_num, ROOT_INODE_NUM);
 }
 
@@ -178,7 +178,7 @@ TEST_F(FileSystemTest, RecursiveBlockDeallocation) {
 
 // Test 7: Metadata Update
 TEST_F(FileSystemTest, WriteInodeMetadata) {
-    int inode_num = alloc_inode(0);
+    int inode_num = alloc_inode(FILE_TYPE::REG_FILE);
     ASSERT_GT(inode_num, 0);
 
     InodeMData new_metadata = {
@@ -189,7 +189,7 @@ TEST_F(FileSystemTest, WriteInodeMetadata) {
         .owner_id = 1000,
         .group_id = 1000,
         .file_size = 1024,
-        .file_type = 0,
+        .file_type = FILE_TYPE::REG_FILE,
         .is_allocated = true,
         .atime = time(nullptr),
         .creation_time = time(nullptr),
@@ -210,7 +210,7 @@ TEST_F(FileSystemTest, WriteInodeMetadata) {
 
 TEST_F(FileSystemTest, FullFileCycle) {
     // Allocate an inode for a regular file (file type = 0)
-    int inode_num = alloc_inode(0);
+    int inode_num = alloc_inode(FILE_TYPE::REG_FILE);
     ASSERT_GE(inode_num, 0);  // Ensure allocation was successful
 
     // Read the inode to verify it was properly created
@@ -240,7 +240,7 @@ TEST_F(FileSystemTest, FullFileCycle) {
 
 TEST_F(FileSystemTest, IndirectBlocks) {
     // Allocate an inode for a regular file (file type = 0)
-    int inode_num = alloc_inode(0);
+    int inode_num = alloc_inode(FILE_TYPE::REG_FILE);
     ASSERT_GE(inode_num, 0);
 
     // Read the inode

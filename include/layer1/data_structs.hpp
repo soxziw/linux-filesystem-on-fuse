@@ -9,6 +9,13 @@
 
 #define ROOT_INODE_NUM 0
 
+enum FILE_TYPE {
+    EMPTY = -1,
+    REG_FILE = 0,
+    DIR = 1,
+    SPEC_FILE = 2,
+};
+
 //superblock should contain inode number for root path
 typedef struct SuperBlock {
     time_t creation_ts;
