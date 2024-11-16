@@ -41,7 +41,7 @@ ls
 find
 ```
 
-POSIX
+POSIX interface
 ```c
 // File descriptor operations
 int open(const char *pathname, int flags);
