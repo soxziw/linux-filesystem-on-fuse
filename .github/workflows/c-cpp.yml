@@ -27,9 +27,11 @@ jobs:
     # Step 3: Set Clang as the C and C++ compiler
     - name: Set up CMake with Clang
       run: |
-        export CC=clang
-        export CXX=clang++
+        export CC="/usr/bin/clang"
+        export CXX="/usr/bin/clang++"
         cmake --version  # Check the version of CMake and Clang
+        which clang
+        which clang++
 
     # Step 4: Create the build directory
     - name: Create build directory
