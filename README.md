@@ -1,4 +1,4 @@
-# CS270 File System Project
+# linux-filesystem-on-fuse
 
 Build the project and run unit tests. (Exec `./build/fuseTests` for unit tests)
 ```bash
