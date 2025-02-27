@@ -1,5 +1,54 @@
 # linux-filesystem-on-fuse
+## Project Overview
+- **Goal**: Implement an ext-based file system  
+- **Features**:  
+  - Basic file manipulation via Linux commands (`cd`, `cat`, `touch`, `echo`, `grep`, `awk`, `sed`, `ls`)  
+  - POSIX interface (`open`, `close`, `read`, `write`, `lseek`, `truncate`, `fstat`, `mount`, `unmount`)
+  - Symbolic links operations (`symlink`, `readlink`, `link`, `unlink`)
+  - Permissions (`chmod`, `chown`)
+  - Compilers and application (`gcc`, `g++`, `gfortran`, `make`, `cmake`, `git`, `vi`)
 
+## Software Architecture
+![fs-arch](https://drive.usercontent.google.com/download?id=155CPURrF4GTFP4Dv3EWw4PkhmV_eNozC)
+
+This pyramid diagram depicts the software stack for a FUSE-based filesystem. The bottom layers (C++ & Clang, CMake & Make) represent the core development and build tools. The filesystem implementation is structured into four layers (Layer0 to Layer3), with FUSE at the top to handle file system operations. Google Test is used for both unit tests (Layer0, Layer1) and integration tests (Layer2, Layer3). GitHub (CI/CD) is used for version control and continuous integration of the project.
+
+
+## Implementation
+
+### Layer 0
+- Disk interface layer  
+- Read/write directly to `/dev/vdb`  
+- Read/write in 4K blocks  
+- **Added feature**: Buffer cache with **LRU policy**  
+
+### Layer 1 (DS Layer)
+![storage-partition](https://drive.usercontent.google.com/download?id=1ev_FWpiAO0df3pGodo3gP-oKlwNVPdea)
+
+This is the layout of a storage partition on a disk. The superblock (block 0) contains metadata about the file system. The i-list (blocks 1-5) stores inodes, which contain file metadata and pointers to data blocks. The data blocks (starting at block 7 and beyond) store the actual file content. The entire partition is a contiguous set of blocks, each 4KB in size, forming a structured way to manage storage.
+
+![free-list](https://drive.usercontent.google.com/download?id=1v8XBQTyS2cvoo4JvXjOl6IlL_FJ0gtjN)
+
+This  illustrates how free blocks are managed in a hierarchical structure. The superblock (101) points to a first-level block (614) that contains addresses of additional free blocks. These free blocks, in turn, store addresses of more free blocks, creating a multi-level indexing system. Each block is 4KB in size and contains 512 block address entries, forming a layered approach to managing available storage.
+
+### Layer 2/3
+- Layer 2 and 3 are not mutually exclusive  
+- **Layer 2**:  
+  - System calls  
+  - Better debugging  
+- **Layer 3**:  
+  - FUSE operations  
+  - Symlinks (FUSE handles loop circumstances for us)  
+  - Permissions  
+
+---
+
+## Permission Support
+- **Partially supported in Layer 3**  
+  - `mkdir`, `rmdir`, `write`, `ls` (directory execution and read)  
+  - `ln` (file link execution and read)
+ 
+## Build
 Build the project and run unit tests. (Exec `./build/fuseTests` for unit tests)
 ```bash
 make build
